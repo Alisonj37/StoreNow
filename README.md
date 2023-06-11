@@ -1,1 +1,1 @@
-# StoreNow
+jodia mwen komanse ak java script avanse a

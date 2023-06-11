@@ -1,0 +1,66 @@
+:root{
+
+    --background : #212529;
+    --primary : #12B886;
+    --primary-dark : #12B88620;
+    --text-primary : #868E96;
+    --text-secondary : #FEFEFE;
+    --text-dark : #515252;
+    --radius : 8px;
+    --radius-cart : 12px 12px 0 0 ;
+    --shadow : 0 4px 40px -20px rgb(255 , 255 , 255 ,0.24);
+    --font-primary : 'poppins' , sans-serif;
+    --padding-default : 14px 26px;
+}
+
+body{
+    background-color: var(--background);
+    color: var(--text-primary);
+    padding: 0 128px ;
+}
+
+.header_container{
+    background-color: var(--background);
+    height: 55px;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    position: fixed;
+    
+}
+
+.header_title{
+    color: var(--text-secondary);
+    font-size: 26px;
+    font-weight: 600px;
+}
+
+button, .search_button{
+    padding: var(--padding-default);
+    border: 1px solid var(--primary-dark);
+    border-radius: var(--radius);
+    background-color:  var(--primary-dark);
+    color: var(--primary);
+    outline: none;
+}
+
+button:hover, .search_button:hover{
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: 0.6s;
+}
+
+input{
+    padding: var(--padding-default);
+    border: 1px solid var(--text-secondary);
+    border-radius: var(--radius);
+    outline: none;
+}
+
+input:focus{
+    border-color: var(--primary);
+}
