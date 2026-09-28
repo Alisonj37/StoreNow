@@ -17,4 +17,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://alisonj37.github.io/StoreNow/loja-3d/sitemap.xml
+Sitemap: https://fones.alishop4.com.br/sitemap.xml
