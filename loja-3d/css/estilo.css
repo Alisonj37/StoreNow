@@ -136,6 +136,16 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   display: block; cursor: pointer; touch-action: pan-y;
 }
+.destaque__palco { perspective: 1400px; }
+.cartao3d {
+  position: absolute; left: 50%; top: 50%; z-index: 1;
+  height: 56%; aspect-ratio: 1; max-width: 80%;
+  transform: translate(-50%, -50%);
+  background: var(--branco); border-radius: 18px; padding: 6%;
+  box-shadow: 0 30px 60px rgba(0,0,0,.45);
+  pointer-events: none; transform-style: preserve-3d;
+}
+.cartao3d img { width: 100%; height: 100%; object-fit: contain; transition: opacity .35s ease; }
 .destaque__fallback {
   position: absolute; inset: 0; z-index: -1;
   background:
@@ -258,6 +268,10 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   transition: transform .8s cubic-bezier(.2,.7,.2,1);
 }
 .cartao__img:hover > img, .cartao__img:hover > .arte { transform: scale(1.05); }
+.cartao__img > img.foto {
+  object-fit: contain; background: var(--branco); padding: 10%;
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
 .arte {
   display: grid; place-items: center;
   background:
