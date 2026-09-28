@@ -326,6 +326,19 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .colecao__qtd { font-size: 14px; opacity: .8; }
 .colecao__titulo { display: block; margin-bottom: 8px; font-size: clamp(24px, 2.4vw, 34px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.02; }
 .colecao__ir { font-weight: 600; font-size: 15px; }
+.colecao__fotos { position: relative; flex: 1; margin-block: 12px; min-height: 140px; }
+.colecao__foto {
+  position: absolute; top: 50%; left: 50%;
+  width: 52%; aspect-ratio: 1; border-radius: 14px; padding: 8%;
+  background: var(--branco); box-shadow: 0 18px 40px rgba(0,0,0,.45);
+  transition: transform .6s cubic-bezier(.2,.7,.2,1);
+}
+.colecao__foto img { width: 100%; height: 100%; object-fit: contain; }
+.colecao__foto--1 { transform: translate(-50%, -50%) rotate(-3deg); z-index: 3; }
+.colecao__foto--2 { transform: translate(-95%, -45%) rotate(-12deg) scale(.82); z-index: 2; }
+.colecao__foto--3 { transform: translate(-5%, -45%) rotate(11deg) scale(.82); z-index: 1; }
+.colecao:hover .colecao__foto--2 { transform: translate(-108%, -48%) rotate(-16deg) scale(.84); }
+.colecao:hover .colecao__foto--3 { transform: translate(8%, -48%) rotate(15deg) scale(.84); }
 
 /* especificações no cartão */
 .specs { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -434,3 +447,23 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- páginas de texto (sobre, contato, políticas) ---------- */
+.texto {
+  max-width: 760px; margin: 0 auto;
+  padding: clamp(32px, 6vw, 80px) var(--margem) clamp(40px, 6vw, 80px);
+  font-size: 17px; line-height: 1.65;
+}
+.texto__trilha { font-size: 14px; color: var(--tinta-2); margin-bottom: 18px; }
+.texto__trilha a { text-decoration: underline; text-underline-offset: 3px; }
+.texto__titulo {
+  font-size: clamp(2.4rem, 7vw, 4.6rem); line-height: .98; letter-spacing: -0.05em; font-weight: 700;
+  margin-bottom: 28px;
+}
+.texto h2 { font-size: 24px; letter-spacing: -0.02em; margin: 36px 0 10px; }
+.texto p, .texto ul { margin: 0 0 14px; color: var(--tinta); }
+.texto ul { padding-left: 22px; }
+.texto li { margin-bottom: 6px; }
+.texto p a:not(.pill), .texto li a { text-decoration: underline; text-underline-offset: 3px; }
+.texto code { background: var(--cinza); padding: 2px 6px; border-radius: 6px; font-size: .9em; }
+.texto__data { color: var(--tinta-2); font-size: 15px; }

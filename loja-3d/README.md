@@ -24,6 +24,28 @@ Abra `js/produtos.js`.
 
 Não coloque preço fixo: a Amazon pede preço atualizado da fonte oficial.
 
+## Google e IAs (SEO)
+
+Depois de editar `js/produtos.js`, rode:
+
+```bash
+node ferramentas/gerar.mjs
+```
+
+Ele atualiza o que os robôs de busca leem sem rodar JavaScript: a lista de produtos dentro do
+`index.html`, metatags, Open Graph, dados estruturados (JSON-LD), as páginas institucionais
+(`sobre`, `contato`, `divulgacao`, `privacidade`, `termos`), `sitemap.xml`, `llms.txt`,
+`robots.txt` e `404.html`. Se você editar `produtos.js` direto no GitHub (branch `main`), o
+GitHub Actions roda isso sozinho (`.github/workflows/gerar-paginas.yml`).
+
+Em `CONFIG`, preencha `urlSite` (endereço público do site) e `emailContato` (aparece em Contato).
+
+Depois que o site estiver no ar:
+1. Cadastre o endereço no **Google Search Console** e envie o `sitemap.xml`.
+2. Faça o mesmo no **Bing Webmaster Tools** (o Bing também alimenta buscas de algumas IAs).
+3. `robots.txt` e `llms.txt` só valem na raiz do domínio. No endereço `github.io/StoreNow/` eles
+   não são lidos; passam a valer se você ligar um domínio próprio ao repositório.
+
 ## Como ver no seu computador
 
 O navegador não carrega os scripts 3D abrindo o arquivo direto (`file://`). Rode um servidor simples

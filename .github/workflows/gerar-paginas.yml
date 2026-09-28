@@ -1,0 +1,33 @@
+# Quando produtos.js muda na main, regenera a lista de produtos no HTML,
+# o sitemap, o llms.txt e as páginas institucionais (para Google e IAs).
+name: Atualizar páginas geradas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "loja-3d/js/produtos.js"
+      - "loja-3d/ferramentas/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node loja-3d/ferramentas/gerar.mjs
+      - name: Salvar se algo mudou
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Atualiza páginas geradas a partir de produtos.js"
+            git push
+          fi
