@@ -48,6 +48,13 @@
     var i = Math.max(0, chaves.indexOf(c));
     return CORES[i % CORES.length];
   }
+  // Foto da Amazon: aceita só o código (ex.: "51TL2aLCIpL") ou uma URL completa
+  function fotoDe(p) {
+    if (!p.imagem) return "";
+    if (/^https?:\/\//.test(p.imagem)) return p.imagem;
+    return "https://m.media-amazon.com/images/I/" + p.imagem + "._AC_SL500_.jpg";
+  }
+
   function arte(p) {
     var ic = ICONES[(CATEGORIAS[p.categoria] || {}).icone] || ICONES.headphone;
     return '<div class="arte" style="--cor:' + corCategoria(p.categoria) + '">' +
@@ -129,7 +136,7 @@
     var n = (i + destaques.length) % destaques.length;
     if (n === atual) return;
     // A cena 3D só aceita uma nova transição quando a anterior terminou
-    if (window.Cena3D && !window.Cena3D.transicao(CORES[n % CORES.length])) return;
+    if (window.Cena3D && !window.Cena3D.transicao(n)) return;
     atual = n;
     pintarDestaque(true);
   }
@@ -139,6 +146,10 @@
 
   window.Loja = {
     cores: CORES,
+    // dados do carrossel para a cena 3D (foto, cor e nome de cada destaque)
+    destaques: destaques.map(function (p, i) {
+      return { foto: fotoDe(p), cor: CORES[i % CORES.length], nome: p.nome, categoria: nomeCategoria(p.categoria) };
+    }),
     proximoDestaque: function () { irPara(atual + 1); },
   };
   pintarDestaque(false);
@@ -197,7 +208,7 @@
   function cartao(p) {
     var loja = LOJAS[p.loja] || LOJAS.amazon;
     var midia = p.imagem
-      ? '<img src="' + esc(p.imagem) + '" alt="' + esc(p.nome) + '" loading="lazy" />'
+      ? '<img class="foto" src="' + esc(fotoDe(p)) + '" alt="' + esc(p.nome) + '" loading="lazy" referrerpolicy="no-referrer" data-i="' + PRODUTOS.indexOf(p) + '" />'
       : arte(p);
     return '<li class="cartao">' +
       '<a class="cartao__img" href="' + esc(linkDe(p)) + '" target="_blank" rel="nofollow sponsored noopener" aria-label="' + esc(p.nome) + " " + loja.na + '">' +
@@ -210,6 +221,14 @@
       "</div>" + (p.preco ? '<span class="cartao__preco">' + esc(p.preco) + "</span>" : "") + "</div>" +
     "</li>";
   }
+
+  // Se uma foto não carregar, troca pela arte gerada
+  document.addEventListener("error", function (e) {
+    var img = e.target;
+    if (!img.classList || !img.classList.contains("foto")) return;
+    var p = PRODUTOS[+img.dataset.i];
+    if (p) img.outerHTML = arte(p);
+  }, true);
 
   function renderGrade() {
     var q = normal(filtro.busca);

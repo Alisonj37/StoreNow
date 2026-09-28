@@ -1,11 +1,12 @@
 /*
  * Cena 3D do destaque — adaptação em Three.js puro do projeto
  * codrops-noise-transition (MIT): fundo com anel de ruído radial
- * e um fone de ouvido 3D (modelado em código) com troca de cor por
- * ruído na emenda, a mesma técnica que o original aplica na lata.
+ * e um cartão 3D com a foto do produto. A troca entre produtos usa a
+ * mesma emenda com ruído que o original aplica na textura da lata.
  */
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { ruido } from "./ruido.js";
 
 const canvas = document.getElementById("cena");
@@ -104,133 +105,204 @@ function pulsoFundo(cor) {
 }
 pulsoFundo(cores[0]);
 
-/* ---------------- fone 3D com transição de cor ---------------- */
-const uniformesFone = {
-  u_time: { value: 0 },
-  u_color1: { value: new THREE.Color(cores[0]) },
-  u_color2: { value: new THREE.Color(cores[1]) },
-  u_progress: { value: 0.5 },
-  u_width: { value: 0.8 },
-  u_scaleX: { value: 50 },
-  u_scaleY: { value: 50 },
-  u_centro: { value: new THREE.Vector2() }, // centro do fone na tela do mundo
-  u_tamanho: { value: new THREE.Vector2(5.4, 5.4) },
-};
+/* ---------------- cartão 3D com a foto do produto ---------------- */
+const destaques = (window.Loja && window.Loja.destaques) || [];
+const LADO = 4.6; // tamanho do cartão em unidades da cena
 
 const suporte = new THREE.Group(); // recebe o arraste (como PresentationControls)
 const flutua = new THREE.Group(); // sobe e desce
 suporte.add(flutua);
 cena.add(suporte);
 
-// Casca colorida: o shader do original, mas a coordenada da emenda vem da
-// posição no mundo (o fone é feito de várias peças, sem uma UV única).
-const casca = new THREE.MeshStandardMaterial({ color: 0x151515, metalness: 0.15, roughness: 0.42 });
-casca.onBeforeCompile = (shader) => {
-  Object.assign(shader.uniforms, uniformesFone);
-  shader.vertexShader = shader.vertexShader
-    .replace("#include <common>", "#include <common>\nvarying vec2 vPosMundo;")
-    .replace(
-      "#include <worldpos_vertex>",
-      "#include <worldpos_vertex>\nvPosMundo = (modelMatrix * vec4(transformed, 1.0)).xy;"
-    );
-  shader.fragmentShader = shader.fragmentShader
-    .replace(
-      "#include <common>",
-      `#include <common>
-      uniform float u_time;
-      uniform vec3 u_color1;
-      uniform vec3 u_color2;
-      uniform float u_progress;
-      uniform float u_width;
-      uniform float u_scaleX;
-      uniform float u_scaleY;
-      uniform vec2 u_centro;
-      uniform vec2 u_tamanho;
-      varying vec2 vPosMundo;
-      ${ruido}
-      float parabola(float x, float k) { return pow(4. * x * (1. - x), k); }`
-    )
-    .replace(
-      "#include <color_fragment>",
-      `#include <color_fragment>
-      vec2 vUv = (vPosMundo - u_centro) / u_tamanho + 0.5;
-      float dt = parabola(u_progress, 1.);
-      float border = 1.;
-      float noise = 0.5 * (cnoise(vec4(vUv.x * u_scaleX + 0.5 * u_time / 3., vUv.y * u_scaleY, 0.5 * u_time / 3., 0.)) + 1.);
-      float w = u_width * dt;
-      float maskValue = smoothstep(1. - w, 1., vUv.y + mix(-w / 2., 1. - w / 2., u_progress));
-      maskValue += maskValue * noise;
-      float mask = smoothstep(border, border + 0.01, maskValue);
-      diffuseColor.rgb += mix(u_color1, u_color2, mask);`
-    );
-};
-// garante que o three não reaproveite o programa de outro MeshStandardMaterial
-casca.customProgramCacheKey = () => "casca-fone";
+const cartao = new THREE.Group();
+cartao.position.set(0, 0, 4);
+cartao.rotation.set(0.08, -0.32, 0);
+flutua.add(cartao);
 
-const espuma = new THREE.MeshStandardMaterial({ color: 0x1b1b1f, roughness: 0.95, metalness: 0 });
-const metal = new THREE.MeshStandardMaterial({ color: 0xd9d9de, roughness: 0.22, metalness: 1 });
+const corpo = new THREE.Mesh(
+  new RoundedBoxGeometry(LADO, LADO, 0.3, 6, 0.32),
+  new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.05 })
+);
+cartao.add(corpo);
 
-function montarFone() {
-  const fone = new THREE.Group();
+// Frente do cartão: mistura a foto atual e a próxima com uma emenda de ruído
+const fotoMat = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: {
+    u_tex1: { value: null },
+    u_tex2: { value: null },
+    u_progress: { value: 0 },
+    u_time: { value: 0 },
+    u_cor: { value: new THREE.Color(cores[0]) },
+    u_raio: { value: 0.07 },
+  },
+  vertexShader: /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: /* glsl */ `
+    uniform sampler2D u_tex1;
+    uniform sampler2D u_tex2;
+    uniform float u_progress;
+    uniform float u_time;
+    uniform float u_raio;
+    uniform vec3 u_cor;
+    varying vec2 vUv;
+    ${ruido}
+    void main() {
+      // cantos arredondados, iguais aos do cartão
+      vec2 q = abs(vUv - 0.5) - (0.5 - u_raio);
+      float d = length(max(q, 0.)) + min(max(q.x, q.y), 0.) - u_raio;
+      float alpha = 1. - smoothstep(-0.002, 0.002, d);
 
-  // arco superior
-  const arco = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.2, 32, 96, Math.PI), casca);
-  arco.scale.set(1, 1.08, 1.35);
-  fone.add(arco);
-  const almofadaArco = new THREE.Mesh(new THREE.TorusGeometry(1.86, 0.13, 24, 64, Math.PI * 0.62), espuma);
-  almofadaArco.rotation.z = Math.PI * 0.19;
-  almofadaArco.scale.set(1, 1.08, 1);
-  fone.add(almofadaArco);
+      // emenda com ruído que sobe de baixo para cima
+      float n = cnoise(vec4(vUv * 5., u_time * 0.2, 0.));
+      float frente = mix(-0.3, 1.3, u_progress);
+      float v = vUv.y + n * 0.12;
+      float mascara = 1. - smoothstep(frente - 0.01, frente + 0.01, v);
+      float ativa = step(0.001, u_progress) * step(u_progress, 0.999);
+      float borda = (1. - smoothstep(0., 0.07, abs(v - frente))) * ativa;
 
-  // concha: perfil arredondado girado (lathe)
-  const perfil = [
-    [0, -0.38], [0.86, -0.38], [0.99, -0.3], [1.04, -0.12],
-    [1.04, 0.14], [0.97, 0.31], [0.82, 0.38], [0, 0.38],
-  ].map(([x, y]) => new THREE.Vector2(x, y));
-  const geoConcha = new THREE.LatheGeometry(perfil, 64);
+      vec3 c1 = texture2D(u_tex1, vUv).rgb;
+      vec3 c2 = texture2D(u_tex2, vUv).rgb;
+      vec3 cor = mix(c1, c2, mascara);
+      float grain = fract(sin(dot(vUv, vec2(12.9898, 78.233) * 2000.0)) * 43758.5453);
+      cor = mix(cor, u_cor * (0.75 + 0.5 * grain), borda);
 
-  for (const lado of [-1, 1]) {
-    const x = 2.05 * lado;
+      gl_FragColor = vec4(cor, alpha);
+      #include <colorspace_fragment>
+    }
+  `,
+});
+const frente = new THREE.Mesh(new THREE.PlaneGeometry(LADO, LADO), fotoMat);
+frente.position.z = 0.151;
+cartao.add(frente);
 
-    // haste de ajuste
-    const haste = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.9, 0.34), metal);
-    haste.position.set(x, -0.35, 0);
-    fone.add(haste);
+/* Texturas: cada destaque começa com uma arte (nome + cor) e troca pela
+   foto assim que ela carrega. Se o servidor da foto não liberar o uso em
+   WebGL (CORS), a foto aparece num cartão HTML com a mesma rotação. */
+const TAM = 1024;
+let modoHTML = false;
+const cartaoHTML = document.getElementById("cartao3d");
+const fotoHTML = cartaoHTML ? cartaoHTML.querySelector("img") : null;
 
-    const concha = new THREE.Mesh(geoConcha, casca);
-    concha.rotation.z = Math.PI / 2;
-    concha.position.set(x + 0.12 * lado, -1.55, 0);
-    fone.add(concha);
-
-    const anel = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.035, 12, 64), metal);
-    anel.rotation.y = Math.PI / 2;
-    anel.position.set(x + 0.52 * lado, -1.55, 0);
-    fone.add(anel);
-
-    const almofada = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.3, 24, 64), espuma);
-    almofada.rotation.y = Math.PI / 2;
-    almofada.scale.set(1, 1, 0.8);
-    almofada.position.set(x - 0.42 * lado, -1.55, 0);
-    fone.add(almofada);
+function quebrarTexto(ctx, texto, largura) {
+  const linhas = [];
+  let linha = "";
+  for (const palavra of texto.split(" ")) {
+    const teste = linha ? linha + " " + palavra : palavra;
+    if (ctx.measureText(teste).width > largura && linha) {
+      linhas.push(linha);
+      linha = palavra;
+    } else linha = teste;
   }
-
-  fone.position.set(0, 0.55, 5);
-  fone.rotation.set(0.12, -0.55, 0);
-  return fone;
+  if (linha) linhas.push(linha);
+  return linhas;
 }
 
-flutua.add(montarFone());
+function desenharArte(ctx, d) {
+  const g = ctx.createRadialGradient(TAM * 0.3, TAM * 0.25, 0, TAM * 0.5, TAM * 0.5, TAM * 0.8);
+  g.addColorStop(0, "#ffffff");
+  g.addColorStop(1, d.cor);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, TAM, TAM);
+  ctx.fillStyle = "#0e0e10";
+  ctx.font = '600 44px "Inter Tight", Arial, sans-serif';
+  ctx.fillText(d.categoria || "", 80, 130);
+  ctx.font = '700 104px "Inter Tight", Arial, sans-serif';
+  const linhas = quebrarTexto(ctx, d.nome, TAM - 160).slice(0, 5);
+  linhas.forEach((l, i) => ctx.fillText(l, 80, TAM - 90 - (linhas.length - 1 - i) * 112));
+}
+
+function desenharFoto(ctx, img) {
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, TAM, TAM);
+  const margem = TAM * 0.1;
+  const caixa = TAM - margem * 2;
+  const k = Math.min(caixa / img.naturalWidth, caixa / img.naturalHeight);
+  const w = img.naturalWidth * k;
+  const h = img.naturalHeight * k;
+  ctx.drawImage(img, (TAM - w) / 2, (TAM - h) / 2, w, h);
+}
+
+function carregarImagem(url, cors) {
+  return new Promise((ok, erro) => {
+    const img = new Image();
+    if (cors) img.crossOrigin = "anonymous";
+    img.referrerPolicy = "no-referrer";
+    img.onload = () => ok(img);
+    img.onerror = erro;
+    img.src = url;
+  });
+}
+
+function ativarModoHTML() {
+  if (modoHTML || !cartaoHTML) return;
+  modoHTML = true;
+  cartao.visible = false;
+  cartaoHTML.hidden = false;
+  fotoHTML.src = destaques[atual] ? destaques[atual].foto : "";
+}
+
+const texturas = destaques.map((d) => {
+  const c = document.createElement("canvas");
+  c.width = c.height = TAM;
+  const ctx = c.getContext("2d");
+  desenharArte(ctx, d);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  if (d.foto) {
+    carregarImagem(d.foto, true)
+      .then((img) => {
+        tex.userData.temFoto = true;
+        desenharFoto(ctx, img);
+        tex.needsUpdate = true;
+      })
+      .catch(() =>
+        // a foto abre sem CORS? então o bloqueio é só no WebGL: usa o cartão HTML
+        carregarImagem(d.foto, false).then(ativarModoHTML, () => {})
+      );
+  }
+  if (document.fonts) {
+    // redesenha a arte com a fonte certa, se a foto ainda não chegou
+    document.fonts.ready.then(() => {
+      if (tex.userData.temFoto) return;
+      desenharArte(ctx, d);
+      tex.needsUpdate = true;
+    });
+  }
+  return tex;
+});
+
+let atual = 0;
+fotoMat.uniforms.u_tex1.value = texturas[0] || null;
+fotoMat.uniforms.u_tex2.value = texturas[0] || null;
 let tocando = false;
 
-/* Troca a cor do fone e dispara o anel do fundo. Retorna false se ocupado. */
-function transicao(cor) {
-  if (tocando) return false;
+/* Troca para o destaque n: foto com emenda de ruído + anel no fundo.
+   Retorna false se uma troca ainda está acontecendo. */
+function transicao(n) {
+  if (tocando || !texturas[n]) return false;
+  const cor = destaques[n].cor;
   pulsoFundo(cor);
   tocando = true;
-  uniformesFone.u_color2.value.set(cor);
-  animar(0.5, 1, 1, (v) => (uniformesFone.u_progress.value = v), () => {
-    uniformesFone.u_color1.value.set(cor);
-    uniformesFone.u_progress.value = 0.5;
+  atual = n;
+  fotoMat.uniforms.u_tex2.value = texturas[n];
+  fotoMat.uniforms.u_cor.value.set(cor);
+  if (modoHTML) {
+    fotoHTML.style.opacity = "0";
+    setTimeout(() => {
+      fotoHTML.src = destaques[n].foto;
+      fotoHTML.style.opacity = "1";
+    }, 350);
+  }
+  animar(0, 1, 1.2, (v) => (fotoMat.uniforms.u_progress.value = v), () => {
+    fotoMat.uniforms.u_tex1.value = texturas[n];
+    fotoMat.uniforms.u_progress.value = 0;
     tocando = false;
   });
   return true;
@@ -280,7 +352,7 @@ function ajustar() {
   fundo.scale.set(altura * camera.aspect, altura, 1);
   fundoMat.uniforms.u_aspect.value = camera.aspect;
 
-  // em telas estreitas (celular em pé) o fone diminui para caber
+  // em telas estreitas (celular em pé) o cartão diminui para caber
   const escala = THREE.MathUtils.clamp(camera.aspect / 0.85, 0.7, 1);
   suporte.scale.setScalar(escala);
 }
@@ -296,12 +368,17 @@ renderer.setAnimationLoop(() => {
   if (!visivel || document.hidden) return;
   const t = relogio.getElapsedTime();
   fundoMat.uniforms.u_time.value = t;
-  uniformesFone.u_time.value = t;
+  fotoMat.uniforms.u_time.value = t;
   if (!reduzido) flutua.position.y = Math.sin(t) * 0.12;
-  const esc = suporte.scale.x;
-  uniformesFone.u_centro.value.set(0, (0.55 + flutua.position.y) * esc - 0.4 * esc);
-  uniformesFone.u_tamanho.value.set(5.4 * esc, 5.4 * esc);
   suporte.rotation.x += (alvo.x - suporte.rotation.x) * 0.08;
   suporte.rotation.y += (alvo.y - suporte.rotation.y) * 0.08;
+  if (modoHTML) {
+    // o cartão HTML segue a mesma rotação e flutuação do cartão 3D
+    const rx = suporte.rotation.x + cartao.rotation.x;
+    const ry = suporte.rotation.y + cartao.rotation.y;
+    const dy = -flutua.position.y * 40;
+    cartaoHTML.style.transform =
+      `translate(-50%, -50%) translateY(${dy}px) rotateX(${-rx}rad) rotateY(${ry}rad)`;
+  }
   renderer.render(cena, camera);
 });
