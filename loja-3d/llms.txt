@@ -41,9 +41,9 @@ As características listadas vêm das páginas oficiais dos produtos na loja. O 
 
 ## Páginas
 
-- [Início](https://alisonj37.github.io/StoreNow/loja-3d/): todos os fones e o guia de escolha
-- [Sobre](https://alisonj37.github.io/StoreNow/loja-3d/sobre.html): como os fones são escolhidos
-- [Divulgação de afiliados](https://alisonj37.github.io/StoreNow/loja-3d/divulgacao.html): como o site recebe comissão
-- [Política de privacidade](https://alisonj37.github.io/StoreNow/loja-3d/privacidade.html)
-- [Termos de uso](https://alisonj37.github.io/StoreNow/loja-3d/termos.html)
-- [Contato](https://alisonj37.github.io/StoreNow/loja-3d/contato.html)
+- [Início](https://fones.alishop4.com.br/): todos os fones e o guia de escolha
+- [Sobre](https://fones.alishop4.com.br/sobre.html): como os fones são escolhidos
+- [Divulgação de afiliados](https://fones.alishop4.com.br/divulgacao.html): como o site recebe comissão
+- [Política de privacidade](https://fones.alishop4.com.br/privacidade.html)
+- [Termos de uso](https://fones.alishop4.com.br/termos.html)
+- [Contato](https://fones.alishop4.com.br/contato.html)

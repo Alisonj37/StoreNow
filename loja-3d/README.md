@@ -43,8 +43,8 @@ Em `CONFIG`, preencha `urlSite` (endereço público do site) e `emailContato` (a
 Depois que o site estiver no ar:
 1. Cadastre o endereço no **Google Search Console** e envie o `sitemap.xml`.
 2. Faça o mesmo no **Bing Webmaster Tools** (o Bing também alimenta buscas de algumas IAs).
-3. `robots.txt` e `llms.txt` só valem na raiz do domínio. No endereço `github.io/StoreNow/` eles
-   não são lidos; passam a valer se você ligar um domínio próprio ao repositório.
+3. `robots.txt`, `llms.txt`, `404.html` e `.htaccess` ficam nesta pasta, que é a raiz do site
+   na hospedagem.
 
 ## Como ver no seu computador
 
@@ -57,11 +57,16 @@ python3 -m http.server 8000
 
 e abra `http://localhost:8000`.
 
-## Como publicar grátis (GitHub Pages)
+## Como publicar na Hostinger (fones.alishop4.com.br)
 
-1. No GitHub, abra o repositório → **Settings** → **Pages**.
-2. Em *Source*, escolha **Deploy from a branch**, selecione a branch e a pasta `/ (root)`.
-3. O site fica em `https://<seu-usuario>.github.io/StoreNow/loja-3d/`.
+1. Gere o ZIP: `node ferramentas/pacote.mjs` (cria `site-hostinger.zip` na raiz do repositório).
+2. No hPanel, crie o subdomínio `fones` em `alishop4.com.br` e veja qual pasta ele usa.
+3. No Gerenciador de Arquivos, abra **a pasta do subdomínio** (não a `public_html` principal, que
+   é do WordPress), envie o ZIP e escolha **Extrair**. O `index.html` deve ficar direto nessa pasta.
+4. Ative o SSL do subdomínio e abra `https://fones.alishop4.com.br`.
+
+Sempre que mudar os produtos, gere o ZIP de novo e repita o passo 3.
+O endereço oficial fica em `CONFIG.urlSite` (`js/produtos.js`).
 
 ## Créditos
 

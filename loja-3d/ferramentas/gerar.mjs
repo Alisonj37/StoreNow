@@ -368,9 +368,9 @@ const PAGINAS = [
 
 for (const p of PAGINAS) escrever(path.join(PASTA, p.arquivo), pagina(p));
 
-/* 404: o GitHub Pages usa o 404.html da raiz do repositório */
+/* 404 na raiz do site (o .htaccess aponta para ele) */
 escrever(
-  path.join(RAIZ_REPO, "404.html"),
+  path.join(PASTA, "404.html"),
   pagina({
     arquivo: "404.html",
     titulo: "Página não encontrada",
@@ -397,7 +397,7 @@ ${urls.map((u) => `  <url><loc>${u.loc}</loc><lastmod>${u.lastmod}</lastmod><pri
 `
 );
 
-/* ---------- robots.txt (vale na raiz do domínio) ---------- */
+/* ---------- robots.txt (a pasta loja-3d é a raiz do site na hospedagem) ---------- */
 const robots = `# Todos os robôs, inclusive de busca por IA, podem ler o site
 User-agent: *
 Allow: /
@@ -419,7 +419,7 @@ Allow: /
 
 Sitemap: ${URL_SITE}sitemap.xml
 `;
-escrever(path.join(RAIZ_REPO, "robots.txt"), robots);
+escrever(path.join(PASTA, "robots.txt"), robots);
 
 /* ---------- llms.txt (resumo do site para IAs) ---------- */
 const porCategoria = Object.keys(CATEGORIAS)
@@ -458,6 +458,5 @@ ${GUIA.map(([q, a]) => `- ${q} ${a}`).join("\n")}
 - [Contato](${URL_SITE}contato.html)
 `;
 escrever(path.join(PASTA, "llms.txt"), llms);
-escrever(path.join(RAIZ_REPO, "llms.txt"), llms);
 
 console.log(`\nPronto: ${PRODUTOS.length} produtos, ${PAGINAS.length} páginas institucionais.`);
