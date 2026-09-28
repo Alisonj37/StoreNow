@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>StoreNow Achados</title>
+<meta name="description" content="Os melhores achados da Amazon e do Mercado Livre, escolhidos a dedo." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/estilo.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<header class="topo" id="topo">
+  <div class="topo__inner">
+    <a class="marca" href="#inicio" aria-label="Início">
+      <span class="marca__nome" data-nome-loja>StoreNow</span><span class="marca__ponto">.</span>
+    </a>
+
+    <nav class="menu" id="menu" aria-label="Principal">
+      <a href="#indicados">Achados</a>
+      <a href="#colecoes">Coleções</a>
+      <a href="#indicados" data-filtro-loja="amazon">Amazon</a>
+      <a href="#indicados" data-filtro-loja="mercadolivre">Mercado Livre</a>
+      <a href="#lojas">Como funciona</a>
+    </nav>
+
+    <div class="topo__acoes">
+      <a class="btn-busca" href="#indicados" data-focar-busca aria-label="Buscar produtos">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </a>
+      <a class="pill pill--preto topo__cta" href="#grupo" data-link-grupo>Receber ofertas</a>
+      <button class="hamburguer" id="hamburguer" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="inicio">
+
+  <!-- ===================== DESTAQUE DO DIA (3D) ===================== -->
+  <section class="destaque" aria-label="Destaque do dia">
+    <div class="destaque__palco" id="palco">
+      <canvas id="cena" aria-label="Produto em 3D. Clique para trocar o destaque."></canvas>
+      <div class="destaque__fallback" aria-hidden="true"></div>
+      <span class="selo">Destaque<br />do dia</span>
+      <p class="destaque__dica" aria-hidden="true">Clique para trocar · Arraste para girar</p>
+    </div>
+
+    <aside class="destaque__painel">
+      <div class="destaque__meta">
+        <span class="etiqueta" id="d-loja">Amazon</span>
+        <span class="etiqueta etiqueta--linha" id="d-categoria">Eletrônicos</span>
+      </div>
+      <h1 class="destaque__titulo" id="d-titulo">Fone de Ouvido Bluetooth</h1>
+      <p class="destaque__desc" id="d-desc">Som limpo no ônibus, no trabalho e na academia.</p>
+      <p class="destaque__preco" id="d-preco" hidden></p>
+
+      <div class="destaque__botoes">
+        <a class="pill pill--preto pill--grande" id="d-link" href="#" target="_blank" rel="nofollow sponsored noopener">
+          Ver oferta <span aria-hidden="true">↗</span>
+        </a>
+        <div class="setas">
+          <button class="seta" id="d-ant" aria-label="Destaque anterior">←</button>
+          <button class="seta" id="d-prox" aria-label="Próximo destaque">→</button>
+        </div>
+      </div>
+
+      <ol class="pontos" id="d-pontos" aria-label="Destaques"></ol>
+    </aside>
+  </section>
+
+  <!-- ===================== LOJAS ===================== -->
+  <section class="faixa" aria-label="Lojas parceiras">
+    <div class="faixa__trilho">
+      <span>Amazon</span><span>✦</span><span>Mercado Livre</span><span>✦</span><span>Achados testados pela comunidade</span><span>✦</span><span>Frete rápido</span><span>✦</span>
+      <span>Amazon</span><span>✦</span><span>Mercado Livre</span><span>✦</span><span>Achados testados pela comunidade</span><span>✦</span><span>Frete rápido</span><span>✦</span>
+    </div>
+  </section>
+
+  <!-- ===================== INDICADOS ===================== -->
+  <section class="secao" id="indicados">
+    <div class="secao__cab">
+      <h2 class="secao__titulo">Achados <em>de hoje</em></h2>
+      <p class="secao__sub"><span id="contador">0</span> produtos selecionados</p>
+    </div>
+
+    <div class="filtros">
+      <div class="chips" id="chips-loja" role="group" aria-label="Filtrar por loja">
+        <button class="chip ativo" data-loja="todas">Todas as lojas</button>
+        <button class="chip" data-loja="amazon"><i class="bolinha bolinha--amazon"></i>Amazon</button>
+        <button class="chip" data-loja="mercadolivre"><i class="bolinha bolinha--ml"></i>Mercado Livre</button>
+      </div>
+      <label class="busca" for="busca">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="busca" type="search" placeholder="Buscar produto…" autocomplete="off" />
+      </label>
+    </div>
+    <div class="chips chips--rolagem" id="chips-cat" role="group" aria-label="Filtrar por categoria"></div>
+
+    <ul class="grade" id="grade"></ul>
+    <p class="vazio" id="vazio" hidden>Nenhum produto encontrado. Tente outra busca ou limpe os filtros.</p>
+  </section>
+
+  <!-- ===================== COLEÇÕES ===================== -->
+  <section class="secao" id="colecoes">
+    <div class="secao__cab">
+      <h2 class="secao__titulo">Coleções</h2>
+      <p class="secao__sub">Listas prontas para cada momento</p>
+    </div>
+    <div class="colecoes" id="lista-colecoes"></div>
+  </section>
+
+  <!-- ===================== COMO FUNCIONA ===================== -->
+  <section class="secao" id="lojas">
+    <div class="lojas">
+      <article class="loja loja--amazon">
+        <span class="loja__nome">Amazon</span>
+        <p>Entrega rápida com Prime, milhões de produtos e devolução fácil.</p>
+        <a class="pill pill--preto" href="#indicados" data-filtro-loja="amazon">Ver achados da Amazon</a>
+      </article>
+      <article class="loja loja--ml">
+        <span class="loja__nome">Mercado Livre</span>
+        <p>Compra garantida, parcelamento e frete grátis em muitos produtos.</p>
+        <a class="pill pill--preto" href="#indicados" data-filtro-loja="mercadolivre">Ver achados do Mercado Livre</a>
+      </article>
+    </div>
+    <p class="aviso">
+      Você compra direto na Amazon ou no Mercado Livre, pelo mesmo preço.
+      Quando a compra é feita pelos nossos links, recebemos uma pequena comissão da loja.
+    </p>
+  </section>
+
+  <!-- ===================== GRUPO ===================== -->
+  <section class="grupo" id="grupo">
+    <p class="grupo__eyebrow">Ofertas no seu celular</p>
+    <h2 class="grupo__titulo">Não perca o próximo achado.</h2>
+    <a class="pill pill--branco pill--grande" href="#" data-link-grupo target="_blank" rel="noopener">Entrar no grupo de ofertas <span aria-hidden="true">↗</span></a>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="rodape__colunas">
+    <div>
+      <h3>Lojas</h3>
+      <a href="#indicados" data-filtro-loja="amazon">Amazon</a>
+      <a href="#indicados" data-filtro-loja="mercadolivre">Mercado Livre</a>
+    </div>
+    <div>
+      <h3>Categorias</h3>
+      <div id="rodape-cats"></div>
+    </div>
+    <div>
+      <h3>Institucional</h3>
+      <a href="#lojas">Como funciona</a>
+      <a href="#grupo">Grupo de ofertas</a>
+    </div>
+    <div class="rodape__divulgacao">
+      <h3>Divulgação</h3>
+      <p>Como Associado da Amazon, recebo por compras qualificadas. Este site também participa do Programa de Afiliados do Mercado Livre. Preços e disponibilidade podem mudar; confira sempre na página da loja.</p>
+    </div>
+  </div>
+  <p class="rodape__marca" aria-hidden="true"><span data-nome-loja>StoreNow</span>.</p>
+  <div class="rodape__base">
+    <span>© <span id="ano"></span> <span data-nome-loja>StoreNow</span></span>
+    <span>Modelo 3D “Energy Drink” por dwalsh (CC BY 4.0) · Efeito baseado em codrops-noise-transition (MIT)</span>
+  </div>
+</footer>
+
+<script src="js/produtos.js"></script>
+<script src="js/app.js"></script>
+<script type="module" src="js/cena3d.js"></script>
+</body>
+</html>
