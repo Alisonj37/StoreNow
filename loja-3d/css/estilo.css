@@ -41,6 +41,7 @@ body {
   overflow-x: hidden;
 }
 img { max-width: 100%; display: block; }
+[hidden] { display: none !important; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 h1, h2, h3 { text-wrap: balance; margin: 0; }
@@ -312,18 +313,26 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .colecao__titulo { display: block; margin-bottom: 8px; font-size: clamp(24px, 2.4vw, 34px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.02; }
 .colecao__ir { font-weight: 600; font-size: 15px; }
 
-/* lojas */
-.lojas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.loja {
-  border-radius: var(--raio); padding: clamp(24px, 3vw, 44px);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 16px;
-  min-height: 300px; color: var(--preto);
+/* especificações no cartão */
+.specs { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.specs li {
+  height: 26px; padding: 0 10px; border-radius: 999px; display: inline-flex; align-items: center;
+  background: var(--cinza); font-size: 12.5px; font-weight: 600; color: var(--tinta);
 }
-.loja--amazon { background: var(--amazon); }
-.loja--ml { background: var(--ml); }
-.loja__nome { font-size: clamp(36px, 5vw, 72px); font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
-.loja p { margin: 0 0 auto; font-size: 18px; max-width: 36ch; }
-.aviso { color: var(--tinta-2); max-width: 70ch; margin: 20px 0 0; }
+
+/* como escolher */
+.guia { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.guia__item {
+  border-top: 2px solid var(--tinta); padding-top: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.guia__sigla {
+  font-size: clamp(40px, 4.4vw, 64px); font-weight: 800; letter-spacing: -0.05em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.guia__item h3 { font-size: 20px; letter-spacing: -0.02em; }
+.guia__item p { margin: 0; color: var(--tinta-2); max-width: 44ch; }
+.aviso { color: var(--tinta-2); max-width: 70ch; margin: 32px 0 0; }
 
 /* grupo */
 .grupo {
@@ -388,7 +397,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   .menu.aberto { opacity: 1; transform: none; visibility: visible; }
   .hamburguer { display: block; }
   .grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lojas { grid-template-columns: 1fr; }
+  .guia { grid-template-columns: 1fr 1fr; gap: 32px 20px; }
 }
 @media (max-width: 600px) {
   :root { --topo-h: 60px; }
@@ -403,7 +412,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   .grade { grid-template-columns: 1fr; gap: 28px; }
   .busca { width: 100%; }
   .colecoes { grid-auto-columns: 78%; }
-  .loja { min-height: 240px; }
+  .guia { grid-template-columns: 1fr; }
   .rodape__colunas { grid-template-columns: 1fr 1fr; }
 }
 

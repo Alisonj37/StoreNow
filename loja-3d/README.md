@@ -1,21 +1,30 @@
-# StoreNow — loja de afiliados 3D
+# StoreNow — fones de ouvido Bluetooth (loja de afiliados 3D)
 
-Vitrine em português (BR) para produtos de afiliado da **Amazon** e do **Mercado Livre**,
-com um destaque 3D interativo no topo (WebGL/Three.js). Funciona no computador e no celular.
+Vitrine em português (BR) de um nicho só: **fones de ouvido Bluetooth**, com produtos reais
+da Amazon e um fone 3D interativo no topo (WebGL/Three.js). Funciona no computador e no celular.
+
+Por que esse nicho: segundo o Semrush (base Brasil, consulta de 28/09/2026), “fone de ouvido
+bluetooth” tem cerca de 301 mil buscas por mês, “fone bluetooth” 74 mil e “fone sem fio” 40,5 mil.
+São estimativas; confira no Semrush antes de decisões grandes.
 
 ## Como editar os produtos
 
-Abra `js/produtos.js`. Todos os produtos ali são **exemplos**: troque o nome, a loja,
-a categoria e cole o **seu link de afiliado** no campo `link`.
+Abra `js/produtos.js`.
 
-- `destaque: true` coloca o produto no carrossel 3D do topo (até 4 produtos).
-- `imagem` é opcional. Sem imagem, o site cria uma arte automática com o ícone da categoria.
-- `preco` é opcional. Se você não conseguir manter o preço atualizado, deixe vazio.
-- Em `window.CONFIG`, troque `linkGrupo` pelo link do seu grupo de ofertas (WhatsApp, Telegram…).
+1. **Coloque sua tag da Amazon** em `CONFIG.tagAmazon` (ex.: `"seunome-20"`). O site monta o link
+   de afiliado de cada produto com o ASIN + sua tag. Sem a tag, os links abrem a Amazon **sem comissão**.
+2. Para trocar ou adicionar um fone, copie um bloco e mude `nome`, `asin`, `categoria` e `specs`.
+   O ASIN fica na URL do produto: `amazon.com.br/dp/ASIN`.
+3. Se você já tem um link pronto (ex.: `https://link.amazon/...`), coloque em `link`; ele tem prioridade.
+4. `destaque: true` coloca o produto no carrossel 3D do topo (até 4).
+5. Mercado Livre: adicione produtos com `loja: "mercadolivre"` e o link gerado na Central de Afiliados
+   em `link`. Os botões e filtros do Mercado Livre aparecem sozinhos quando houver produtos dele.
+
+Não coloque preço fixo: a Amazon pede preço atualizado da fonte oficial.
 
 ## Como ver no seu computador
 
-O navegador não carrega o modelo 3D abrindo o arquivo direto (`file://`). Rode um servidor simples
+O navegador não carrega os scripts 3D abrindo o arquivo direto (`file://`). Rode um servidor simples
 dentro desta pasta:
 
 ```bash
@@ -33,5 +42,5 @@ e abra `http://localhost:8000`.
 ## Créditos
 
 - Efeito 3D baseado em [codrops-noise-transition](https://github.com/mohAmineBrs/codrops-noise-transition) (licença MIT).
-- Modelo 3D “Energy Drink Game Ready Model” por dwalsh, [Sketchfab](https://sketchfab.com/3d-models/energy-drink-game-ready-model-83676feb8b0a4589952cf3676299311b), licença CC BY 4.0.
+- O fone 3D é modelado em código (`js/cena3d.js`), sem arquivo de modelo externo.
 - Three.js (licença MIT).

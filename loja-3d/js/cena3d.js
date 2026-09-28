@@ -1,10 +1,10 @@
 /*
  * Cena 3D do destaque — adaptação em Three.js puro do projeto
  * codrops-noise-transition (MIT): fundo com anel de ruído radial
- * e lata 3D com troca de cor por ruído na emenda.
+ * e um fone de ouvido 3D (modelado em código) com troca de cor por
+ * ruído na emenda, a mesma técnica que o original aplica na lata.
  */
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { ruido } from "./ruido.js";
 
@@ -104,8 +104,8 @@ function pulsoFundo(cor) {
 }
 pulsoFundo(cores[0]);
 
-/* ---------------- lata 3D com transição de textura ---------------- */
-const uniformesLata = {
+/* ---------------- fone 3D com transição de cor ---------------- */
+const uniformesFone = {
   u_time: { value: 0 },
   u_color1: { value: new THREE.Color(cores[0]) },
   u_color2: { value: new THREE.Color(cores[1]) },
@@ -113,6 +113,8 @@ const uniformesLata = {
   u_width: { value: 0.8 },
   u_scaleX: { value: 50 },
   u_scaleY: { value: 50 },
+  u_centro: { value: new THREE.Vector2() }, // centro do fone na tela do mundo
+  u_tamanho: { value: new THREE.Vector2(5.4, 5.4) },
 };
 
 const suporte = new THREE.Group(); // recebe o arraste (como PresentationControls)
@@ -120,82 +122,115 @@ const flutua = new THREE.Group(); // sobe e desce
 suporte.add(flutua);
 cena.add(suporte);
 
-let modeloPronto = false;
+// Casca colorida: o shader do original, mas a coordenada da emenda vem da
+// posição no mundo (o fone é feito de várias peças, sem uma UV única).
+const casca = new THREE.MeshStandardMaterial({ color: 0x151515, metalness: 0.15, roughness: 0.42 });
+casca.onBeforeCompile = (shader) => {
+  Object.assign(shader.uniforms, uniformesFone);
+  shader.vertexShader = shader.vertexShader
+    .replace("#include <common>", "#include <common>\nvarying vec2 vPosMundo;")
+    .replace(
+      "#include <worldpos_vertex>",
+      "#include <worldpos_vertex>\nvPosMundo = (modelMatrix * vec4(transformed, 1.0)).xy;"
+    );
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      "#include <common>",
+      `#include <common>
+      uniform float u_time;
+      uniform vec3 u_color1;
+      uniform vec3 u_color2;
+      uniform float u_progress;
+      uniform float u_width;
+      uniform float u_scaleX;
+      uniform float u_scaleY;
+      uniform vec2 u_centro;
+      uniform vec2 u_tamanho;
+      varying vec2 vPosMundo;
+      ${ruido}
+      float parabola(float x, float k) { return pow(4. * x * (1. - x), k); }`
+    )
+    .replace(
+      "#include <color_fragment>",
+      `#include <color_fragment>
+      vec2 vUv = (vPosMundo - u_centro) / u_tamanho + 0.5;
+      float dt = parabola(u_progress, 1.);
+      float border = 1.;
+      float noise = 0.5 * (cnoise(vec4(vUv.x * u_scaleX + 0.5 * u_time / 3., vUv.y * u_scaleY, 0.5 * u_time / 3., 0.)) + 1.);
+      float w = u_width * dt;
+      float maskValue = smoothstep(1. - w, 1., vUv.y + mix(-w / 2., 1. - w / 2., u_progress));
+      maskValue += maskValue * noise;
+      float mask = smoothstep(border, border + 0.01, maskValue);
+      diffuseColor.rgb += mix(u_color1, u_color2, mask);`
+    );
+};
+// garante que o three não reaproveite o programa de outro MeshStandardMaterial
+casca.customProgramCacheKey = () => "casca-fone";
+
+const espuma = new THREE.MeshStandardMaterial({ color: 0x1b1b1f, roughness: 0.95, metalness: 0 });
+const metal = new THREE.MeshStandardMaterial({ color: 0xd9d9de, roughness: 0.22, metalness: 1 });
+
+function montarFone() {
+  const fone = new THREE.Group();
+
+  // arco superior
+  const arco = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.2, 32, 96, Math.PI), casca);
+  arco.scale.set(1, 1.08, 1.35);
+  fone.add(arco);
+  const almofadaArco = new THREE.Mesh(new THREE.TorusGeometry(1.86, 0.13, 24, 64, Math.PI * 0.62), espuma);
+  almofadaArco.rotation.z = Math.PI * 0.19;
+  almofadaArco.scale.set(1, 1.08, 1);
+  fone.add(almofadaArco);
+
+  // concha: perfil arredondado girado (lathe)
+  const perfil = [
+    [0, -0.38], [0.86, -0.38], [0.99, -0.3], [1.04, -0.12],
+    [1.04, 0.14], [0.97, 0.31], [0.82, 0.38], [0, 0.38],
+  ].map(([x, y]) => new THREE.Vector2(x, y));
+  const geoConcha = new THREE.LatheGeometry(perfil, 64);
+
+  for (const lado of [-1, 1]) {
+    const x = 2.05 * lado;
+
+    // haste de ajuste
+    const haste = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.9, 0.34), metal);
+    haste.position.set(x, -0.35, 0);
+    fone.add(haste);
+
+    const concha = new THREE.Mesh(geoConcha, casca);
+    concha.rotation.z = Math.PI / 2;
+    concha.position.set(x + 0.12 * lado, -1.55, 0);
+    fone.add(concha);
+
+    const anel = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.035, 12, 64), metal);
+    anel.rotation.y = Math.PI / 2;
+    anel.position.set(x + 0.52 * lado, -1.55, 0);
+    fone.add(anel);
+
+    const almofada = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.3, 24, 64), espuma);
+    almofada.rotation.y = Math.PI / 2;
+    almofada.scale.set(1, 1, 0.8);
+    almofada.position.set(x - 0.42 * lado, -1.55, 0);
+    fone.add(almofada);
+  }
+
+  fone.position.set(0, 0.55, 5);
+  fone.rotation.set(0.12, -0.55, 0);
+  return fone;
+}
+
+flutua.add(montarFone());
 let tocando = false;
 
-new GLTFLoader().load(new URL("../modelos/lata.glb", import.meta.url).href, (gltf) => {
-  // Igual ao original: usa só a geometria das malhas, sem as escalas do Sketchfab
-  const malhas = {};
-  gltf.scene.traverse((obj) => { if (obj.isMesh) malhas[obj.name] = obj; });
-  const corpo = malhas.LowRes_Can_Body_0;
-  const tampa = malhas.LowRes_Can_Alluminium_0;
-
-  const lata = new THREE.Group();
-  lata.rotation.set(-Math.PI / 2, 1.7, Math.PI / 2);
-  lata.position.set(0, 0, 5);
-  const interno = new THREE.Group();
-  interno.rotation.set(-Math.PI / 2, 0, 0);
-  lata.add(interno);
-  interno.add(new THREE.Mesh(tampa.geometry, tampa.material));
-  interno.add(new THREE.Mesh(corpo.geometry, corpo.material));
-
-  const m = corpo.material;
-  m.metalness = 0;
-  m.roughness = 1;
-  m.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniformesLata);
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec2 vUv;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvUv = uv;");
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        `#include <common>
-        uniform float u_time;
-        uniform vec3 u_color1;
-        uniform vec3 u_color2;
-        uniform float u_progress;
-        uniform float u_width;
-        uniform float u_scaleX;
-        uniform float u_scaleY;
-        varying vec2 vUv;
-        ${ruido}
-        float parabola(float x, float k) { return pow(4. * x * (1. - x), k); }`
-      )
-      .replace(
-        "#include <color_fragment>",
-        `#include <color_fragment>
-        float dt = parabola(u_progress, 1.);
-        float border = 1.;
-        float noise = 0.5 * (cnoise(vec4(vUv.x * u_scaleX + 0.5 * u_time / 3., vUv.y * u_scaleY, 0.5 * u_time / 3., 0.)) + 1.);
-        float w = u_width * dt;
-        float maskValue = smoothstep(1. - w, 1., vUv.y + mix(-w / 2., 1. - w / 2., u_progress));
-        maskValue += maskValue * noise;
-        float mask = smoothstep(border, border + 0.01, maskValue);
-        diffuseColor.rgb += mix(u_color1, u_color2, mask);`
-      );
-  };
-  m.needsUpdate = true;
-
-  flutua.add(lata);
-  modeloPronto = true;
-  ajustar();
-  palco.classList.add("pronto");
-});
-
-/* Troca a cor da lata e dispara o anel do fundo. Retorna false se ocupado. */
+/* Troca a cor do fone e dispara o anel do fundo. Retorna false se ocupado. */
 function transicao(cor) {
   if (tocando) return false;
   pulsoFundo(cor);
-  if (!modeloPronto) {
-    uniformesLata.u_color1.value.set(cor);
-    return true;
-  }
   tocando = true;
-  uniformesLata.u_color2.value.set(cor);
-  animar(0.5, 1, 1, (v) => (uniformesLata.u_progress.value = v), () => {
-    uniformesLata.u_color1.value.set(cor);
-    uniformesLata.u_progress.value = 0.5;
+  uniformesFone.u_color2.value.set(cor);
+  animar(0.5, 1, 1, (v) => (uniformesFone.u_progress.value = v), () => {
+    uniformesFone.u_color1.value.set(cor);
+    uniformesFone.u_progress.value = 0.5;
     tocando = false;
   });
   return true;
@@ -245,8 +280,8 @@ function ajustar() {
   fundo.scale.set(altura * camera.aspect, altura, 1);
   fundoMat.uniforms.u_aspect.value = camera.aspect;
 
-  // em telas estreitas (celular em pé) a lata diminui para caber
-  const escala = THREE.MathUtils.clamp(camera.aspect / 1.1, 0.62, 1);
+  // em telas estreitas (celular em pé) o fone diminui para caber
+  const escala = THREE.MathUtils.clamp(camera.aspect / 0.85, 0.7, 1);
   suporte.scale.setScalar(escala);
 }
 new ResizeObserver(ajustar).observe(palco);
@@ -261,8 +296,11 @@ renderer.setAnimationLoop(() => {
   if (!visivel || document.hidden) return;
   const t = relogio.getElapsedTime();
   fundoMat.uniforms.u_time.value = t;
-  uniformesLata.u_time.value = t;
+  uniformesFone.u_time.value = t;
   if (!reduzido) flutua.position.y = Math.sin(t) * 0.12;
+  const esc = suporte.scale.x;
+  uniformesFone.u_centro.value.set(0, (0.55 + flutua.position.y) * esc - 0.4 * esc);
+  uniformesFone.u_tamanho.value.set(5.4 * esc, 5.4 * esc);
   suporte.rotation.x += (alvo.x - suporte.rotation.x) * 0.08;
   suporte.rotation.y += (alvo.y - suporte.rotation.y) * 0.08;
   renderer.render(cena, camera);
