@@ -29,7 +29,7 @@
 window.CONFIG = {
   nomeLoja: "StoreNow",
   // Sua tag de associado da Amazon (Amazon Associados → "ID de rastreamento")
-  tagAmazon: "",
+  tagAmazon: "alisonj12-20",
   // Link do seu grupo de ofertas (WhatsApp, Telegram, Instagram…)
   linkGrupo: "#",
 };
