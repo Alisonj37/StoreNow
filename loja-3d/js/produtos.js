@@ -33,6 +33,10 @@ window.CONFIG = {
   tagAmazon: "alisonj12-20",
   // Link do seu grupo de ofertas (WhatsApp, Telegram, Instagram…)
   linkGrupo: "#",
+  // Endereço público do site (usado no Google, no sitemap e nas páginas)
+  urlSite: "https://alisonj37.github.io/StoreNow/loja-3d/",
+  // E-mail que aparece na página de Contato e na Política de privacidade
+  emailContato: "",
 };
 
 window.CATEGORIAS = {

@@ -225,6 +225,7 @@
   // Se uma foto não carregar, troca pela arte gerada
   document.addEventListener("error", function (e) {
     var img = e.target;
+    if (img.dataset && img.dataset.semFoto === "esconder") { img.parentNode.hidden = true; return; }
     if (!img.classList || !img.classList.contains("foto")) return;
     var p = PRODUTOS[+img.dataset.i];
     if (p) img.outerHTML = arte(p);
@@ -245,9 +246,16 @@
 
   /* ---------- coleções ---------- */
   $("#lista-colecoes").innerHTML = COLECOES.map(function (c) {
-    var qtd = PRODUTOS.filter(function (p) { return p.categoria === c.categoria; }).length;
+    var itens = PRODUTOS.filter(function (p) { return p.categoria === c.categoria; });
+    var qtd = itens.length;
+    // até 3 fotos dos fones da coleção, sobrepostas como cartas
+    var fotos = itens.filter(function (p) { return p.imagem; }).slice(0, 3).map(function (p, i) {
+      return '<span class="colecao__foto colecao__foto--' + (i + 1) + '">' +
+        '<img src="' + esc(fotoDe(p)) + '" alt="' + esc(p.nome) + '" loading="lazy" referrerpolicy="no-referrer" data-sem-foto="esconder" /></span>';
+    }).join("");
     return '<a class="colecao" href="#indicados" data-filtro-cat="' + esc(c.categoria) + '" style="--cor:' + esc(c.cor) + '">' +
       '<span class="colecao__qtd">' + qtd + (qtd === 1 ? " produto" : " produtos") + "</span>" +
+      (fotos ? '<span class="colecao__fotos" aria-hidden="true">' + fotos + "</span>" : "") +
       '<span><span class="colecao__titulo">' + esc(c.titulo) + '</span><br /><span class="colecao__ir">Ver coleção →</span></span>' +
     "</a>";
   }).join("");
